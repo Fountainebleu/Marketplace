@@ -1,8 +1,34 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Domain", "Marketplace.Domain\Marketplace.Domain.csproj", "{ABAEA778-973D-45C1-8059-879D3B7167C5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Infrastructure", "Marketplace.Infrastructure\Marketplace.Infrastructure.csproj", "{E149DF06-A84C-4107-8CE9-EF1F562401EC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Application", "Marketplace.Application\Marketplace.Application.csproj", "{0FF03ED5-CD64-4C22-BCA2-68FD0E448CEC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Presentation", "Marketplace.Presentation\Marketplace.Presentation.csproj", "{1AA2123C-23EB-418E-B8C5-D48BBE998ED5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ABAEA778-973D-45C1-8059-879D3B7167C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABAEA778-973D-45C1-8059-879D3B7167C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABAEA778-973D-45C1-8059-879D3B7167C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABAEA778-973D-45C1-8059-879D3B7167C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E149DF06-A84C-4107-8CE9-EF1F562401EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E149DF06-A84C-4107-8CE9-EF1F562401EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E149DF06-A84C-4107-8CE9-EF1F562401EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E149DF06-A84C-4107-8CE9-EF1F562401EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0FF03ED5-CD64-4C22-BCA2-68FD0E448CEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FF03ED5-CD64-4C22-BCA2-68FD0E448CEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0FF03ED5-CD64-4C22-BCA2-68FD0E448CEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0FF03ED5-CD64-4C22-BCA2-68FD0E448CEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1AA2123C-23EB-418E-B8C5-D48BBE998ED5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1AA2123C-23EB-418E-B8C5-D48BBE998ED5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1AA2123C-23EB-418E-B8C5-D48BBE998ED5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1AA2123C-23EB-418E-B8C5-D48BBE998ED5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
