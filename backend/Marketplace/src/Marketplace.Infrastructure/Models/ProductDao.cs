@@ -1,8 +1,8 @@
 using Marketplace.Domain.Enums;
 
-namespace Marketplace.Domain.Models;
+namespace Marketplace.Infrastructure.Models;
 
-public record Product(
+public record ProductDao(
     Guid Id,
     string Name,
     string Description,
