@@ -1,12 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Domain", "Marketplace.Domain\Marketplace.Domain.csproj", "{ABAEA778-973D-45C1-8059-879D3B7167C5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductService.Domain", "ProductService\ProductService.Domain\ProductService.Domain.csproj", "{ABAEA778-973D-45C1-8059-879D3B7167C5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Infrastructure", "Marketplace.Infrastructure\Marketplace.Infrastructure.csproj", "{E149DF06-A84C-4107-8CE9-EF1F562401EC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductService.Infrastructure", "ProductService\ProductService.Infrastructure\ProductService.Infrastructure.csproj", "{E149DF06-A84C-4107-8CE9-EF1F562401EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Application", "Marketplace.Application\Marketplace.Application.csproj", "{0FF03ED5-CD64-4C22-BCA2-68FD0E448CEC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductService.Application", "ProductService\ProductService.Application\ProductService.Application.csproj", "{0FF03ED5-CD64-4C22-BCA2-68FD0E448CEC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Presentation", "Marketplace.Presentation\Marketplace.Presentation.csproj", "{1AA2123C-23EB-418E-B8C5-D48BBE998ED5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductService.Presentation", "ProductService.Presentation\ProductService.Presentation.csproj", "{8C371019-0CD1-453F-9298-DB90A35C251A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,5 +30,11 @@ Global
 		{1AA2123C-23EB-418E-B8C5-D48BBE998ED5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1AA2123C-23EB-418E-B8C5-D48BBE998ED5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1AA2123C-23EB-418E-B8C5-D48BBE998ED5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C371019-0CD1-453F-9298-DB90A35C251A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C371019-0CD1-453F-9298-DB90A35C251A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C371019-0CD1-453F-9298-DB90A35C251A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C371019-0CD1-453F-9298-DB90A35C251A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
 EndGlobal
