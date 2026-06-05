@@ -6,7 +6,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductService.Infrastructu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductService.Application", "ProductService\ProductService.Application\ProductService.Application.csproj", "{0FF03ED5-CD64-4C22-BCA2-68FD0E448CEC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductService.Presentation", "ProductService.Presentation\ProductService.Presentation.csproj", "{8C371019-0CD1-453F-9298-DB90A35C251A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductService.Presentation", "ProductService\ProductService.Presentation\ProductService.Presentation.csproj", "{8C371019-0CD1-453F-9298-DB90A35C251A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProductService", "ProductService", "{6C2E8E0F-74F4-45D3-8E26-2C1206746388}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,15 +28,15 @@ Global
 		{0FF03ED5-CD64-4C22-BCA2-68FD0E448CEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0FF03ED5-CD64-4C22-BCA2-68FD0E448CEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0FF03ED5-CD64-4C22-BCA2-68FD0E448CEC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1AA2123C-23EB-418E-B8C5-D48BBE998ED5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1AA2123C-23EB-418E-B8C5-D48BBE998ED5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1AA2123C-23EB-418E-B8C5-D48BBE998ED5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1AA2123C-23EB-418E-B8C5-D48BBE998ED5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8C371019-0CD1-453F-9298-DB90A35C251A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8C371019-0CD1-453F-9298-DB90A35C251A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8C371019-0CD1-453F-9298-DB90A35C251A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C371019-0CD1-453F-9298-DB90A35C251A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{ABAEA778-973D-45C1-8059-879D3B7167C5} = {6C2E8E0F-74F4-45D3-8E26-2C1206746388}
+		{E149DF06-A84C-4107-8CE9-EF1F562401EC} = {6C2E8E0F-74F4-45D3-8E26-2C1206746388}
+		{0FF03ED5-CD64-4C22-BCA2-68FD0E448CEC} = {6C2E8E0F-74F4-45D3-8E26-2C1206746388}
+		{8C371019-0CD1-453F-9298-DB90A35C251A} = {6C2E8E0F-74F4-45D3-8E26-2C1206746388}
 	EndGlobalSection
 EndGlobal
