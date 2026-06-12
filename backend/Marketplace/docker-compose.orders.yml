@@ -1,0 +1,15 @@
+services:
+  orders-db:
+    image: postgres:16-alpine
+    container_name: marketplace-orders-db
+    environment:
+      POSTGRES_DB: orders
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - orders-db-data:/var/lib/postgresql/data
+
+volumes:
+  orders-db-data:
