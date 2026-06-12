@@ -1,0 +1,41 @@
+using FluentMigrator.Runner;
+using FluentValidation;
+using Orders.Api.Endpoints;
+using Orders.Api.Infrastructure;
+using Orders.Api.Services;
+using Orders.Api.Validation;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<DbConnectionFactory>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<OrderService>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderRequestValidator>();
+builder.Services.AddOpenApi();
+
+builder.Services
+    .AddFluentMigratorCore()
+    .ConfigureRunner(runner => runner
+        .AddPostgres()
+        .WithGlobalConnectionString(builder.Configuration.GetConnectionString("OrdersDb"))
+        .ScanIn(typeof(CreateOrdersTablesMigration).Assembly).For.Migrations())
+    .AddLogging(logging => logging.AddFluentMigratorConsole());
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var migrationRunner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+    migrationRunner.MigrateUp();
+}
+
+app.UseHttpsRedirection();
+app.MapOrdersEndpoints();
+
+app.Run();
