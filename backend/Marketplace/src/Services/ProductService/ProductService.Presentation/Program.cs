@@ -10,6 +10,17 @@ using ProductApplicationService = ProductService.Application.Implementations.Pro
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "http://localhost")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 builder.Services.AddOpenApi();
 builder.Services.AddValidatorsFromAssemblyContaining<ProductRequestValidator>();
 
@@ -31,6 +42,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.RunMigrations();
+app.UseCors();
 app.UseHttpsRedirection();
 app.MapProductEndpoints();
 

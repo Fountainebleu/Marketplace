@@ -7,6 +7,17 @@ using Orders.Api.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "http://localhost")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<DbConnectionFactory>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
@@ -35,6 +46,7 @@ using (var scope = app.Services.CreateScope())
     migrationRunner.MigrateUp();
 }
 
+app.UseCors();
 app.UseHttpsRedirection();
 app.MapOrdersEndpoints();
 
