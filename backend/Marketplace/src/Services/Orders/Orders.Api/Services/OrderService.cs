@@ -4,7 +4,10 @@ using Orders.Api.Infrastructure;
 
 namespace Orders.Api.Services;
 
-public sealed class OrderService(IOrderRepository repository, TimeProvider timeProvider)
+public sealed class OrderService(
+    IOrderRepository repository,
+    IProductCatalogClient productCatalogClient,
+    TimeProvider timeProvider)
 {
     private static readonly IReadOnlyDictionary<OrderStatus, OrderStatus[]> AllowedTransitions =
         new Dictionary<OrderStatus, OrderStatus[]>
@@ -19,6 +22,15 @@ public sealed class OrderService(IOrderRepository repository, TimeProvider timeP
 
     public async Task<OrderResponse> CreateAsync(CreateOrderRequest request, CancellationToken cancellationToken)
     {
+        var productIds = request.Items.Select(item => item.ProductId).Distinct().ToArray();
+        var products = await productCatalogClient.GetProductsByIdsAsync(productIds, cancellationToken);
+        var missingProductIds = productIds.Where(id => !products.ContainsKey(id)).ToArray();
+
+        if (missingProductIds.Length > 0)
+        {
+            throw new ProductsNotAvailableException(missingProductIds);
+        }
+
         var now = timeProvider.GetUtcNow();
         var order = new Order
         {
@@ -33,7 +45,10 @@ public sealed class OrderService(IOrderRepository repository, TimeProvider timeP
         };
 
         order.Items.AddRange(request.Items.Select(item =>
-            new OrderItem(item.ProductId, item.ProductName.Trim(), item.UnitPrice, item.Quantity)));
+        {
+            var product = products[item.ProductId];
+            return new OrderItem(item.ProductId, product.Name, product.Price, item.Quantity);
+        }));
 
         var created = await repository.CreateAsync(order, cancellationToken);
         return created.ToResponse();

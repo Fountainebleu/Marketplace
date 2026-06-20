@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option csharp_namespace = "Marketplace.Products.Grpc";
+
+package marketplace.products;
+
+service ProductCatalog {
+  rpc GetProductsByIds (GetProductsByIdsRequest) returns (GetProductsByIdsResponse);
+}
+
+message GetProductsByIdsRequest {
+  repeated string product_ids = 1;
+}
+
+message GetProductsByIdsResponse {
+  repeated ProductSnapshot products = 1;
+}
+
+message ProductSnapshot {
+  string id = 1;
+  string sku = 2;
+  string name = 3;
+  string price = 4;
+  bool is_active = 5;
+}

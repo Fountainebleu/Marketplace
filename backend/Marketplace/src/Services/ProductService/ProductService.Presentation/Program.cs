@@ -5,6 +5,7 @@ using ProductService.Infrastructure.Helpers;
 using ProductService.Infrastructure.Implementations;
 using ProductService.Infrastructure.Migrations;
 using ProductService.Presentation.Endpoints;
+using ProductService.Presentation.Grpc;
 using ProductService.Presentation.Validators;
 using ProductApplicationService = ProductService.Application.Implementations.ProductService;
 
@@ -22,6 +23,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddOpenApi();
+builder.Services.AddGrpc();
 builder.Services.AddValidatorsFromAssemblyContaining<ProductRequestValidator>();
 
 var productsConnectionString = builder.Configuration.GetConnectionString("ProductsDb")
@@ -45,5 +47,6 @@ app.RunMigrations();
 app.UseCors();
 app.UseHttpsRedirection();
 app.MapProductEndpoints();
+app.MapGrpcService<ProductCatalogGrpcService>();
 
 app.Run();

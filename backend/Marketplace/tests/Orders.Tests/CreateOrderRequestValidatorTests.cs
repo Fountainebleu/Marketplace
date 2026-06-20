@@ -29,7 +29,7 @@ public sealed class CreateOrderRequestValidatorTests
             "Ivan",
             "+79990000000",
             "Ekaterinburg",
-            [new CreateOrderItemRequest(Guid.NewGuid(), "Keyboard", 4500, 2)]);
+            [new CreateOrderItemRequest(Guid.NewGuid(), 2)]);
 
         var result = new CreateOrderRequestValidator().Validate(request);
 

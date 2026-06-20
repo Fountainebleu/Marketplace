@@ -41,6 +41,26 @@ public class ProductRepository(IPostgresConnectionFactory connectionFactory) : I
         return dao?.ToDomain();
     }
 
+    public async Task<IReadOnlyCollection<Product>> GetProductsByIdsAsync(IReadOnlyCollection<Guid> productIds)
+    {
+        if (productIds.Count == 0)
+        {
+            return [];
+        }
+
+        await using var connection = connectionFactory.GetConnection();
+
+        var sql = $"""
+                   SELECT {ProductColumns}
+                   FROM products
+                   WHERE id = ANY(@Ids)
+                     AND is_active = TRUE
+                   """;
+
+        var daos = await connection.QueryAsync<ProductDao>(sql, new { Ids = productIds.Distinct().ToArray() });
+        return daos.Select(dao => dao.ToDomain()).ToArray();
+    }
+
     public async Task<PagedResult<Product>> GetProductsAsync(ProductSearchQuery query)
     {
         await using var connection = connectionFactory.GetConnection();

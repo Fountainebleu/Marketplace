@@ -71,8 +71,6 @@ export default function CheckoutPage() {
         deliveryAddress: form.deliveryAddress.trim(),
         items: items.map((item) => ({
           productId: item.productId,
-          productName: item.productName,
-          unitPrice: item.unitPrice,
           quantity: item.quantity,
         })),
       });

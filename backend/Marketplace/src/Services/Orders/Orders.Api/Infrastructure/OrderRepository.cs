@@ -60,7 +60,16 @@ public sealed class OrderRepository(DbConnectionFactory connectionFactory) : IOr
         var offset = (page - 1) * pageSize;
 
         var sql = """
-            select id, customer_id, customer_name, phone, delivery_address, status, total_price, created_at, updated_at
+            select
+                id as "Id",
+                customer_id as "CustomerId",
+                customer_name as "CustomerName",
+                phone as "Phone",
+                delivery_address as "DeliveryAddress",
+                status as "Status",
+                total_price as "TotalPrice",
+                created_at as "CreatedAt",
+                updated_at as "UpdatedAt"
             from orders
             where (@Status is null or status = @Status)
             order by created_at desc
@@ -82,7 +91,16 @@ public sealed class OrderRepository(DbConnectionFactory connectionFactory) : IOr
         using var connection = connectionFactory.Create();
 
         const string orderSql = """
-            select id, customer_id, customer_name, phone, delivery_address, status, total_price, created_at, updated_at
+            select
+                id as "Id",
+                customer_id as "CustomerId",
+                customer_name as "CustomerName",
+                phone as "Phone",
+                delivery_address as "DeliveryAddress",
+                status as "Status",
+                total_price as "TotalPrice",
+                created_at as "CreatedAt",
+                updated_at as "UpdatedAt"
             from orders
             where id = @Id;
             """;
@@ -98,7 +116,11 @@ public sealed class OrderRepository(DbConnectionFactory connectionFactory) : IOr
         var order = orderRow.ToOrder();
 
         const string itemsSql = """
-            select product_id, product_name, unit_price, quantity
+            select
+                product_id as "ProductId",
+                product_name as "ProductName",
+                unit_price as "UnitPrice",
+                quantity as "Quantity"
             from order_items
             where order_id = @Id
             order by product_name;
@@ -151,7 +173,10 @@ public sealed class OrderRepository(DbConnectionFactory connectionFactory) : IOr
         using var connection = connectionFactory.Create();
 
         const string sql = """
-            select status, comment, changed_at
+            select
+                status as "Status",
+                comment as "Comment",
+                changed_at as "ChangedAt"
             from order_status_history
             where order_id = @OrderId
             order by changed_at;
@@ -190,35 +215,38 @@ public sealed class OrderRepository(DbConnectionFactory connectionFactory) : IOr
 
     private sealed record OrderRow(
         Guid Id,
-        Guid Customer_Id,
-        string Customer_Name,
+        Guid CustomerId,
+        string CustomerName,
         string Phone,
-        string Delivery_Address,
+        string DeliveryAddress,
         string Status,
-        decimal Total_Price,
-        DateTimeOffset Created_At,
-        DateTimeOffset Updated_At)
+        decimal TotalPrice,
+        DateTime CreatedAt,
+        DateTime UpdatedAt)
     {
         public Order ToOrder() => new()
         {
             Id = Id,
-            CustomerId = Customer_Id,
-            CustomerName = Customer_Name,
+            CustomerId = CustomerId,
+            CustomerName = CustomerName,
             Phone = Phone,
-            DeliveryAddress = Delivery_Address,
+            DeliveryAddress = DeliveryAddress,
             Status = Enum.Parse<OrderStatus>(Status),
-            CreatedAt = Created_At,
-            UpdatedAt = Updated_At
+            CreatedAt = ToDateTimeOffset(CreatedAt),
+            UpdatedAt = ToDateTimeOffset(UpdatedAt)
         };
     }
 
-    private sealed record OrderItemRow(Guid Product_Id, string Product_Name, decimal Unit_Price, int Quantity)
+    private sealed record OrderItemRow(Guid ProductId, string ProductName, decimal UnitPrice, int Quantity)
     {
-        public OrderItem ToOrderItem() => new(Product_Id, Product_Name, Unit_Price, Quantity);
+        public OrderItem ToOrderItem() => new(ProductId, ProductName, UnitPrice, Quantity);
     }
 
-    private sealed record HistoryRow(string Status, string? Comment, DateTimeOffset Changed_At)
+    private sealed record HistoryRow(string Status, string? Comment, DateTime ChangedAt)
     {
-        public OrderStatusHistory ToHistory() => new(Enum.Parse<OrderStatus>(Status), Comment, Changed_At);
+        public OrderStatusHistory ToHistory() => new(Enum.Parse<OrderStatus>(Status), Comment, ToDateTimeOffset(ChangedAt));
     }
+
+    private static DateTimeOffset ToDateTimeOffset(DateTime value) =>
+        new(DateTime.SpecifyKind(value, DateTimeKind.Utc));
 }

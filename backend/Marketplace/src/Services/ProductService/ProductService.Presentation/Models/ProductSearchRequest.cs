@@ -17,9 +17,9 @@ public class ProductSearchRequest
 
     public int PageSize { get; set; } = 20;
 
-    public ProductSortField SortBy { get; set; } = ProductSortField.CreatedAt;
+    public ProductSortField? SortBy { get; set; }
 
-    public SortDirection SortDirection { get; set; } = SortDirection.Desc;
+    public SortDirection? SortDirection { get; set; }
 
     public ProductSearchQuery ToDomain() => new(
         Query,
@@ -28,6 +28,6 @@ public class ProductSearchRequest
         MaxPrice,
         Page,
         PageSize,
-        SortBy,
-        SortDirection);
+        SortBy ?? ProductSortField.CreatedAt,
+        SortDirection ?? ProductService.Domain.Enums.SortDirection.Desc);
 }

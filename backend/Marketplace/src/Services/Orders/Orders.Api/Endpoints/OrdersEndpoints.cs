@@ -22,8 +22,25 @@ public static class OrdersEndpoints
                 return Results.ValidationProblem(validationResult.ToDictionary());
             }
 
-            var order = await service.CreateAsync(request, cancellationToken);
-            return Results.Created($"/api/orders/{order.Id}", order);
+            try
+            {
+                var order = await service.CreateAsync(request, cancellationToken);
+                return Results.Created($"/api/orders/{order.Id}", order);
+            }
+            catch (ProductsNotAvailableException exception)
+            {
+                return Results.BadRequest(new
+                {
+                    message = "One or more products do not exist or are inactive.",
+                    productIds = exception.ProductIds
+                });
+            }
+            catch (ProductCatalogUnavailableException)
+            {
+                return Results.Problem(
+                    statusCode: StatusCodes.Status503ServiceUnavailable,
+                    title: "Product catalog is unavailable.");
+            }
         });
 
         group.MapGet("/", async (
