@@ -11,7 +11,7 @@ public sealed class OrderServiceTests
     public async Task ChangeStatusAsync_allows_created_to_paid()
     {
         var repository = new FakeOrderRepository(OrderStatus.Created);
-        var service = new OrderService(repository, TimeProvider.System);
+        var service = new OrderService(repository, new FakeProductCatalogClient(), TimeProvider.System);
 
         var result = await service.ChangeStatusAsync(
             repository.OrderId,
@@ -27,7 +27,7 @@ public sealed class OrderServiceTests
     public async Task ChangeStatusAsync_rejects_created_to_delivered()
     {
         var repository = new FakeOrderRepository(OrderStatus.Created);
-        var service = new OrderService(repository, TimeProvider.System);
+        var service = new OrderService(repository, new FakeProductCatalogClient(), TimeProvider.System);
 
         var result = await service.ChangeStatusAsync(
             repository.OrderId,
@@ -36,6 +36,65 @@ public sealed class OrderServiceTests
 
         Assert.Equal(ChangeStatusError.InvalidTransition, result.Error);
         Assert.Equal(OrderStatus.Created, repository.CurrentStatus);
+    }
+
+    [Fact]
+    public async Task CreateAsync_uses_product_name_and_price_from_catalog()
+    {
+        var productId = Guid.NewGuid();
+        var repository = new FakeOrderRepository(OrderStatus.Created);
+        var catalog = new FakeProductCatalogClient(
+            new ProductCatalogItem(productId, "KB-001", "Trusted Keyboard", 5999));
+        var service = new OrderService(repository, catalog, TimeProvider.System);
+        var request = new CreateOrderRequest(
+            Guid.NewGuid(),
+            "Ivan",
+            "+79990000000",
+            "Ekaterinburg",
+            [new CreateOrderItemRequest(productId, 2)]);
+
+        var result = await service.CreateAsync(request, CancellationToken.None);
+
+        var item = Assert.Single(result.Items);
+        Assert.Equal("Trusted Keyboard", item.ProductName);
+        Assert.Equal(5999, item.UnitPrice);
+        Assert.Equal(11998, result.TotalPrice);
+    }
+
+    [Fact]
+    public async Task CreateAsync_rejects_product_missing_from_catalog()
+    {
+        var productId = Guid.NewGuid();
+        var repository = new FakeOrderRepository(OrderStatus.Created);
+        var service = new OrderService(repository, new FakeProductCatalogClient(), TimeProvider.System);
+        var request = new CreateOrderRequest(
+            Guid.NewGuid(),
+            "Ivan",
+            "+79990000000",
+            "Ekaterinburg",
+            [new CreateOrderItemRequest(productId, 1)]);
+
+        var exception = await Assert.ThrowsAsync<ProductsNotAvailableException>(
+            () => service.CreateAsync(request, CancellationToken.None));
+
+        Assert.Contains(productId, exception.ProductIds);
+    }
+
+    private sealed class FakeProductCatalogClient(params ProductCatalogItem[] products) : IProductCatalogClient
+    {
+        private readonly IReadOnlyDictionary<Guid, ProductCatalogItem> _products =
+            products.ToDictionary(product => product.Id);
+
+        public Task<IReadOnlyDictionary<Guid, ProductCatalogItem>> GetProductsByIdsAsync(
+            IReadOnlyCollection<Guid> productIds,
+            CancellationToken cancellationToken)
+        {
+            IReadOnlyDictionary<Guid, ProductCatalogItem> result = productIds
+                .Where(_products.ContainsKey)
+                .ToDictionary(id => id, id => _products[id]);
+
+            return Task.FromResult(result);
+        }
     }
 
     private sealed class FakeOrderRepository : IOrderRepository

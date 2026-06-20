@@ -14,8 +14,6 @@ export interface CheckoutForm {
 
 export interface CreateOrderItemRequest {
   productId: string;
-  productName: string;
-  unitPrice: number;
   quantity: number;
 }
 

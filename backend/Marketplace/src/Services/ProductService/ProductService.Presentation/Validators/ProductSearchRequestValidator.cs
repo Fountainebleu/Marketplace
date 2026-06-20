@@ -20,10 +20,12 @@ public class ProductSearchRequestValidator : AbstractValidator<ProductSearchRequ
             .When(query => query.Category.HasValue);
 
         RuleFor(query => query.SortBy)
-            .IsInEnum();
+            .IsInEnum()
+            .When(query => query.SortBy.HasValue);
 
         RuleFor(query => query.SortDirection)
-            .IsInEnum();
+            .IsInEnum()
+            .When(query => query.SortDirection.HasValue);
 
         RuleFor(query => query.MinPrice)
             .GreaterThanOrEqualTo(0)

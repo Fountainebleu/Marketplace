@@ -113,6 +113,15 @@ public sealed class ProductServiceTests
             return Task.FromResult(Product);
         }
 
+        public Task<IReadOnlyCollection<ProductModel>> GetProductsByIdsAsync(IReadOnlyCollection<Guid> productIds)
+        {
+            IReadOnlyCollection<ProductModel> products = Product is not null && productIds.Contains(Product.Id)
+                ? [Product]
+                : [];
+
+            return Task.FromResult(products);
+        }
+
         public Task<PagedResult<ProductModel>> GetProductsAsync(ProductSearchQuery query)
         {
             RequestedSearchQuery = query;

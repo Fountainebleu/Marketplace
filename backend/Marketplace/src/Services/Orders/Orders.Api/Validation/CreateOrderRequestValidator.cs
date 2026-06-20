@@ -21,8 +21,6 @@ public sealed class CreateOrderItemRequestValidator : AbstractValidator<CreateOr
     public CreateOrderItemRequestValidator()
     {
         RuleFor(item => item.ProductId).NotEmpty();
-        RuleFor(item => item.ProductName).NotEmpty().MaximumLength(300);
-        RuleFor(item => item.UnitPrice).GreaterThan(0);
         RuleFor(item => item.Quantity).GreaterThan(0);
     }
 }

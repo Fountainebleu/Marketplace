@@ -9,6 +9,4 @@ public sealed record CreateOrderRequest(
 
 public sealed record CreateOrderItemRequest(
     Guid ProductId,
-    string ProductName,
-    decimal UnitPrice,
     int Quantity);

@@ -21,9 +21,16 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<DbConnectionFactory>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IProductCatalogClient, GrpcProductCatalogClient>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderRequestValidator>();
 builder.Services.AddOpenApi();
+builder.Services.AddGrpcClient<Marketplace.Products.Grpc.ProductCatalog.ProductCatalogClient>(options =>
+{
+    options.Address = new Uri(
+        builder.Configuration["ProductCatalog:GrpcAddress"]
+        ?? throw new InvalidOperationException("ProductCatalog:GrpcAddress is not configured."));
+});
 
 builder.Services
     .AddFluentMigratorCore()

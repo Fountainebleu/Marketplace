@@ -1,15 +1,79 @@
 services:
-  orders-db:
-    image: postgres:16-alpine
-    container_name: marketplace-orders-db
-    environment:
-      POSTGRES_DB: orders
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+  reverse-proxy:
+    image: nginx:1.27-alpine
+    container_name: marketplace-reverse-proxy
     ports:
-      - "5433:5432"
+      - "8080:80"
     volumes:
-      - orders-db-data:/var/lib/postgresql/data
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - product-service
+      - orders-service
+    networks:
+      - marketplace
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: marketplace-frontend
+    command: npm run dev -- --host 0.0.0.0
+    environment:
+      VITE_PRODUCTS_API_URL: /api/products
+      VITE_ORDERS_API_URL: /api/orders
+    expose:
+      - "5173"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    networks:
+      - marketplace
+    restart: unless-stopped
+
+  product-service:
+    build:
+      context: ./backend/Marketplace/src
+      dockerfile: Services/ProductService/ProductService.Presentation/Dockerfile
+    container_name: marketplace-product-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__ProductsDb: Host=products-db;Port=5432;Database=products;Username=postgres;Password=postgres
+      Kestrel__Endpoints__Http__Url: http://+:8080
+      Kestrel__Endpoints__Http__Protocols: Http1
+      Kestrel__Endpoints__Grpc__Url: http://+:8081
+      Kestrel__Endpoints__Grpc__Protocols: Http2
+    expose:
+      - "8080"
+      - "8081"
+    depends_on:
+      products-db:
+        condition: service_healthy
+    networks:
+      - marketplace
+    restart: unless-stopped
+
+  orders-service:
+    build:
+      context: ./backend/Marketplace/src
+      dockerfile: Services/Orders/Orders.Api/Dockerfile
+    container_name: marketplace-orders-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__OrdersDb: Host=orders-db;Port=5432;Database=orders;Username=postgres;Password=postgres
+      ProductCatalog__GrpcAddress: http://product-service:8081
+    expose:
+      - "8080"
+    depends_on:
+      orders-db:
+        condition: service_healthy
+      product-service:
+        condition: service_started
+    networks:
+      - marketplace
+    restart: unless-stopped
 
   products-db:
     image: postgres:16-alpine
@@ -22,17 +86,40 @@ services:
       - "5434:5432"
     volumes:
       - products-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d products"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - marketplace
+    restart: unless-stopped
 
-  frontend:
-    build: ./frontend
-    command: npm run dev -- --host 0.0.0.0
+  orders-db:
+    image: postgres:16-alpine
+    container_name: marketplace-orders-db
+    environment:
+      POSTGRES_DB: orders
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "5173:5173"
+      - "5433:5432"
     volumes:
-      - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
+      - orders-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d orders"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - marketplace
+    restart: unless-stopped
+
+networks:
+  marketplace:
+    driver: bridge
 
 volumes:
-  orders-db-data:
-  products-db-data:
   frontend_node_modules:
+  products-db-data:
+  orders-db-data:
