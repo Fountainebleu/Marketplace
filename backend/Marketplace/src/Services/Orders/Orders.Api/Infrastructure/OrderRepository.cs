@@ -83,7 +83,55 @@ public sealed class OrderRepository(DbConnectionFactory connectionFactory) : IOr
             Offset = offset
         }, cancellationToken: cancellationToken));
 
-        return rows.Select(row => row.ToOrder()).ToArray();
+        var orders = rows.Select(row => row.ToOrder()).ToArray();
+        if (orders.Length == 0)
+        {
+            return orders;
+        }
+
+        var orderIds = orders.Select(order => order.Id).ToArray();
+
+        const string itemsSql = """
+            select
+                order_id as "OrderId",
+                product_id as "ProductId",
+                product_name as "ProductName",
+                unit_price as "UnitPrice",
+                quantity as "Quantity"
+            from order_items
+            where order_id = any(@OrderIds)
+            order by product_name;
+            """;
+
+        var itemRows = await connection.QueryAsync<OrderItemPageRow>(
+            new CommandDefinition(itemsSql, new { OrderIds = orderIds }, cancellationToken: cancellationToken));
+
+        var ordersById = orders.ToDictionary(order => order.Id);
+        foreach (var itemGroup in itemRows.GroupBy(row => row.OrderId))
+        {
+            ordersById[itemGroup.Key].Items.AddRange(itemGroup.Select(row => row.ToOrderItem()));
+        }
+
+        const string historySql = """
+            select
+                order_id as "OrderId",
+                status as "Status",
+                comment as "Comment",
+                changed_at as "ChangedAt"
+            from order_status_history
+            where order_id = any(@OrderIds)
+            order by changed_at;
+            """;
+
+        var historyRows = await connection.QueryAsync<HistoryPageRow>(
+            new CommandDefinition(historySql, new { OrderIds = orderIds }, cancellationToken: cancellationToken));
+
+        foreach (var historyGroup in historyRows.GroupBy(row => row.OrderId))
+        {
+            ordersById[historyGroup.Key].History.AddRange(historyGroup.Select(row => row.ToHistory()));
+        }
+
+        return orders;
     }
 
     public async Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
@@ -242,7 +290,22 @@ public sealed class OrderRepository(DbConnectionFactory connectionFactory) : IOr
         public OrderItem ToOrderItem() => new(ProductId, ProductName, UnitPrice, Quantity);
     }
 
+    private sealed record OrderItemPageRow(
+        Guid OrderId,
+        Guid ProductId,
+        string ProductName,
+        decimal UnitPrice,
+        int Quantity)
+    {
+        public OrderItem ToOrderItem() => new(ProductId, ProductName, UnitPrice, Quantity);
+    }
+
     private sealed record HistoryRow(string Status, string? Comment, DateTime ChangedAt)
+    {
+        public OrderStatusHistory ToHistory() => new(Enum.Parse<OrderStatus>(Status), Comment, ToDateTimeOffset(ChangedAt));
+    }
+
+    private sealed record HistoryPageRow(Guid OrderId, string Status, string? Comment, DateTime ChangedAt)
     {
         public OrderStatusHistory ToHistory() => new(Enum.Parse<OrderStatus>(Status), Comment, ToDateTimeOffset(ChangedAt));
     }

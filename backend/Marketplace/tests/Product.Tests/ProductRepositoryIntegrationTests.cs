@@ -1,52 +1,72 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Npgsql;
 using ProductService.Domain.Enums;
 using ProductService.Domain.Models;
 using ProductService.Infrastructure.Helpers;
 using ProductService.Infrastructure.Implementations;
 using ProductService.Infrastructure.Migrations;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
+using Testcontainers.PostgreSql;
 using ProductModel = ProductService.Domain.Models.Product;
 
 namespace Product.Tests;
 
-public sealed class ProductRepositoryIntegrationTests
+public sealed class ProductPostgreSqlFixture : IAsyncLifetime
 {
-    [Fact]
-    public async Task RunMigrations_creates_products_table_when_database_is_available()
+    public PostgreSqlContainer Container { get; } = new PostgreSqlBuilder("postgres:16-alpine")
+        .WithDatabase("products_tests")
+        .WithUsername("postgres")
+        .WithPassword("postgres")
+        .Build();
+
+    public async Task InitializeAsync()
     {
-        var connectionString = GetConnectionString();
-        if (connectionString is null)
-        {
-            return;
-        }
+        await Container.StartAsync();
 
-        using var host = CreateHost(connectionString);
+        using var host = CreateHost(Container.GetConnectionString());
         host.RunMigrations();
+    }
 
-        await using var connection = new NpgsqlConnection(connectionString);
+    public Task DisposeAsync() => Container.DisposeAsync().AsTask();
+
+    private static IHost CreateHost(string connectionString)
+    {
+        return Host.CreateDefaultBuilder()
+            .ConfigureAppConfiguration(configuration =>
+            {
+                configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:ProductsDb"] = connectionString
+                });
+            })
+            .Build();
+    }
+}
+
+public sealed class ProductRepositoryIntegrationTests(ProductPostgreSqlFixture database)
+    : IClassFixture<ProductPostgreSqlFixture>
+{
+    private string ConnectionString => database.Container.GetConnectionString();
+
+    [Fact]
+    public async Task Migrations_create_products_table()
+    {
+        await using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync();
         await using var command = new NpgsqlCommand(
             "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'products'",
             connection);
 
         var result = (long)(await command.ExecuteScalarAsync() ?? 0L);
+
         Assert.Equal(1, result);
     }
 
     [Fact]
-    public async Task Repository_filters_products_by_sku_query_category_price_and_paging_when_database_is_available()
+    public async Task Repository_filters_products_by_sku_query_category_price_and_paging()
     {
-        var connectionString = GetConnectionString();
-        if (connectionString is null)
-        {
-            return;
-        }
-
-        using var host = CreateHost(connectionString);
-        host.RunMigrations();
-
-        var repository = new ProductRepository(new PostgresConnectionFactory(connectionString));
+        var repository = new ProductRepository(
+            new PostgresConnectionFactory(ConnectionString));
         var marker = $"integration-{Guid.NewGuid():N}";
         var target = CreateProduct($"{marker}-target", ProductCategory.Electronics, 150);
         var otherCategory = CreateProduct($"{marker}-other-category", ProductCategory.Books, 150);
@@ -71,31 +91,45 @@ public sealed class ProductRepositoryIntegrationTests
         Assert.Equal(target.Id, result.Items[0].Id);
     }
 
-    private static string? GetConnectionString()
+    [Fact]
+    public async Task Repository_creates_updates_and_soft_deletes_product()
     {
-        return Environment.GetEnvironmentVariable("PRODUCTS_TEST_CONNECTION_STRING");
-    }
+        var repository = new ProductRepository(
+            new PostgresConnectionFactory(ConnectionString));
+        var product = CreateProduct($"crud-{Guid.NewGuid():N}", ProductCategory.General, 100);
 
-    private static IHost CreateHost(string connectionString)
-    {
-        return Host.CreateDefaultBuilder()
-            .ConfigureAppConfiguration(configuration =>
-            {
-                configuration.AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["ConnectionStrings:ProductsDb"] = connectionString
-                });
-            })
-            .Build();
+        await repository.CreateProductAsync(product);
+        var created = await repository.GetProductAsync(product.Id);
+
+        Assert.NotNull(created);
+        Assert.Equal(product.Name, created.Name);
+
+        var updated = product with
+        {
+            Name = $"{product.Name}-updated",
+            Price = 250,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        await repository.UpdateAsync(updated);
+        var loadedUpdated = await repository.GetProductAsync(product.Id);
+
+        Assert.NotNull(loadedUpdated);
+        Assert.Equal(updated.Name, loadedUpdated.Name);
+        Assert.Equal(250, loadedUpdated.Price);
+
+        Assert.True(await repository.DeleteAsync(product.Id));
+        Assert.Null(await repository.GetProductAsync(product.Id));
     }
 
     private static ProductModel CreateProduct(string name, ProductCategory category, decimal price)
     {
         var now = DateTime.UtcNow;
+        var sku = $"{name}-sku";
 
         return new ProductModel(
             Guid.NewGuid(),
-            $"{name}-sku"[..Math.Min($"{name}-sku".Length, 100)],
+            sku[..Math.Min(sku.Length, 100)],
             name,
             $"{name} description",
             price,

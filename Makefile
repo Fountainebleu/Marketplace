@@ -1,4 +1,4 @@
-.PHONY: up down build logs ps dev install dev-frontend dev-products dev-orders
+.PHONY: up down build logs ps dev install dev-frontend dev-products dev-orders up-fresh
 
 COMPOSE_FILE     := docker-compose.yml
 SVC_PRODUCTS_DB  := products-db
@@ -40,3 +40,7 @@ dev-products:
 
 dev-orders:
 	cd $(ORDERS_DIR) && dotnet run
+
+up-fresh:
+ docker compose -f $(COMPOSE_FILE) down -v
+ docker compose -f $(COMPOSE_FILE) up --build -d
