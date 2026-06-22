@@ -1,23 +1,23 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { normalizeQuantity } from '@/api/validation';
-import { CartItem } from '@/types/order';
+import { ICartItem } from '@/types/order';
 
-interface CartContextValue {
-  items: CartItem[];
+interface ICartContextValue {
+  items: ICartItem[];
   totalItems: number;
   totalPrice: number;
-  addItem: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
+  addItem: (item: Omit<ICartItem, 'quantity'>, quantity?: number) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
 }
 
-const CartContext = createContext<CartContextValue | null>(null);
+const CartContext = createContext<ICartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<ICartItem[]>([]);
 
-  const addItem = useCallback((item: Omit<CartItem, 'quantity'>, quantity = 1) => {
+  const addItem = useCallback((item: Omit<ICartItem, 'quantity'>, quantity = 1) => {
     const normalizedQuantity = normalizeQuantity(quantity);
 
     setItems((prev) => {

@@ -1,3 +1,4 @@
+import { FC } from 'react';
 import {
   Box,
   Button,
@@ -12,11 +13,11 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { CART_QUANTITY } from '@/api/validation';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { useCart } from '@/context/CartContext';
+import EmptyState from '@/components/UI/empty-state/EmptyState';
+import { useCart } from '@/contexts/CartContext';
 import { formatPrice, pluralizeProducts } from '@/utils/format';
 
-export default function CartPage() {
+const CartPage: FC = () => {
   const { items, totalPrice, updateQuantity, removeItem } = useCart();
   const navigate = useNavigate();
 
@@ -117,4 +118,6 @@ export default function CartPage() {
       </Paper>
     </Box>
   );
-}
+};
+
+export default CartPage;

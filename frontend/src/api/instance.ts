@@ -1,6 +1,3 @@
-export const PRODUCTS_API_URL = import.meta.env.VITE_PRODUCTS_API_URL ?? '/api/products';
-export const ORDERS_API_URL = import.meta.env.VITE_ORDERS_API_URL ?? '/api/orders';
-
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -35,7 +32,6 @@ async function parseResponse<T>(response: Response): Promise<T> {
         message = body.message;
       }
     } catch {
-      // ignore non-json body
     }
 
     throw new ApiError(message, response.status);
@@ -48,19 +44,25 @@ async function parseResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function apiGet<T>(url: string, params?: Record<string, string | number | undefined>) {
-  const search = new URLSearchParams();
-
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') {
-        search.set(key, String(value));
-      }
-    });
+function buildQuery(params?: Record<string, string | number | undefined>): string {
+  if (!params) {
+    return '';
   }
 
+  const search = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') {
+      search.set(key, String(value));
+    }
+  });
+
   const query = search.toString();
-  const fullUrl = query ? `${url}?${query}` : url;
+  return query ? `?${query}` : '';
+}
+
+export async function apiGet<T>(url: string, params?: Record<string, string | number | undefined>) {
+  const fullUrl = `${url}${buildQuery(params)}`;
   const response = await fetch(fullUrl, { headers: { Accept: 'application/json' } });
 
   return parseResponse<T>(response);

@@ -11,13 +11,13 @@ import { Link as RouterLink } from 'react-router-dom';
 import { cardHoverSx } from '@/theme';
 import { formatPrice, formatWeight } from '@/utils/format';
 import { formatProductCategory } from '@/types/productCategories';
-import { Product } from '@/types/product';
+import { IProduct } from '@/types/product';
 
-interface ProductCardProps {
-  product: Product;
+interface IProductCardProps {
+  product: IProduct;
 }
 
-export const ProductCard = ({ product }: ProductCardProps) => (
+export const ProductCard = ({ product }: IProductCardProps) => (
   <Card sx={{ height: '100%', ...cardHoverSx }}>
     <CardActionArea
       component={RouterLink}

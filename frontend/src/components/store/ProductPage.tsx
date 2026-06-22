@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { FC, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import {
   Alert,
@@ -16,14 +16,14 @@ import {
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined';
 import ScaleOutlinedIcon from '@mui/icons-material/ScaleOutlined';
-import { PageLoader } from '@/components/ui/PageLoader';
+import Loader from '@/components/UI/loader/Loader';
 import { CART_QUANTITY, normalizeQuantity } from '@/api/validation';
-import { useCart } from '@/context/CartContext';
+import { useCart } from '@/contexts/CartContext';
 import { useProduct } from '@/hooks/productsQuery';
 import { formatProductCategory } from '@/types/productCategories';
 import { formatPrice, formatWeight } from '@/utils/format';
 
-export default function ProductPage() {
+const ProductPage: FC = () => {
   const { id } = useParams<{ id: string }>();
   const { addItem } = useCart();
   const { data: product, isLoading, isError } = useProduct(id);
@@ -31,7 +31,7 @@ export default function ProductPage() {
   const [added, setAdded] = useState(false);
 
   if (isLoading) {
-    return <PageLoader />;
+    return <Loader text="Пожалуйста, подождите..." />;
   }
 
   if (isError) {
@@ -158,4 +158,6 @@ export default function ProductPage() {
       </Paper>
     </Box>
   );
-}
+};
+
+export default ProductPage;

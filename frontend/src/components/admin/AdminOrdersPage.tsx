@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { FC, useCallback } from 'react';
 import {
-  Alert,
   Box,
   Chip,
   FormControl,
@@ -17,8 +16,8 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { PageLoader } from '@/components/ui/PageLoader';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import AsyncContent from '@/components/UI/async-content/AsyncContent';
 import { useOrdersList } from '@/hooks/ordersQuery';
 import {
   ORDER_STATUS_COLORS,
@@ -26,12 +25,23 @@ import {
   formatOrderStatus,
 } from '@/types/orderStatus';
 import { formatDate, formatPrice, shortId } from '@/utils/format';
+import { getSearchParam, setSearchParam } from '@/utils/searchParams';
 import { OrderStatus } from '@/types/order';
 
-export default function AdminOrdersPage() {
+const AdminOrdersPage: FC = () => {
   const navigate = useNavigate();
-  const [statusFilter, setStatusFilter] = useState('');
-  const { data: orders = [], isLoading, isError } = useOrdersList({
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = getSearchParam(searchParams, 'status');
+
+  const setStatusFilter = useCallback((status: string) => {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      setSearchParam(params, 'status', status);
+      return params;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const { data: orders = [], isLoading, isError, refetch } = useOrdersList({
     page: 1,
     pageSize: 50,
     status: statusFilter || undefined,
@@ -64,16 +74,13 @@ export default function AdminOrdersPage() {
         </FormControl>
       </Stack>
 
-      {isError && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          Не удалось загрузить заказы
-        </Alert>
-      )}
-
       <TableContainer component={Paper}>
-        {isLoading ? (
-          <PageLoader />
-        ) : (
+        <AsyncContent
+          loading={isLoading}
+          error={isError ? 'Не удалось загрузить заказы' : null}
+          onRetry={() => refetch()}
+          minHeight={280}
+        >
           <Table>
             <TableHead>
               <TableRow>
@@ -117,8 +124,10 @@ export default function AdminOrdersPage() {
               )}
             </TableBody>
           </Table>
-        )}
+        </AsyncContent>
       </TableContainer>
     </Box>
   );
-}
+};
+
+export default AdminOrdersPage;

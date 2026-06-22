@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { FC, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Link as RouterLink } from 'react-router-dom';
-import { PageLoader } from '@/components/ui/PageLoader';
+import Loader from '@/components/UI/loader/Loader';
 import { validateOrderStatusComment } from '@/api/validation';
 import { useOrder, useUpdateOrderStatus } from '@/hooks/ordersQuery';
 import {
@@ -35,7 +35,7 @@ import {
 import { formatDate, formatPrice } from '@/utils/format';
 import { OrderStatus } from '@/types/order';
 
-export default function AdminOrderPage() {
+const AdminOrderPage: FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: order, isLoading, isError } = useOrder(id);
@@ -47,7 +47,7 @@ export default function AdminOrderPage() {
   const [commentError, setCommentError] = useState<string | null>(null);
 
   if (isLoading) {
-    return <PageLoader />;
+    return <Loader text="Пожалуйста, подождите..." />;
   }
 
   if (isError || !order) {
@@ -241,4 +241,6 @@ export default function AdminOrderPage() {
       </Stack>
     </Box>
   );
-}
+};
+
+export default AdminOrderPage;

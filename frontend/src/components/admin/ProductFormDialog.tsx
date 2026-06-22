@@ -16,9 +16,9 @@ import {
 } from '@mui/material';
 import { hasValidationErrors, validateProductRequest } from '@/api/validation';
 import { FILTER_CATEGORIES, formatProductCategory } from '@/types/productCategories';
-import { Product, ProductCategory, ProductRequest } from '@/types/product';
+import { IProduct, ProductCategory, IProductRequest } from '@/types/product';
 
-export const emptyProductForm: ProductRequest = {
+const emptyProductForm: IProductRequest = {
   sku: '',
   name: '',
   description: '',
@@ -32,7 +32,7 @@ export const emptyProductForm: ProductRequest = {
   imageUrl: 'https://placehold.co/600x400/png',
 };
 
-export function productToForm(product: Product): ProductRequest {
+function productToForm(product: IProduct): IProductRequest {
   return {
     sku: product.sku,
     name: product.name,
@@ -48,12 +48,12 @@ export function productToForm(product: Product): ProductRequest {
   };
 }
 
-interface ProductFormDialogProps {
+interface IProductFormDialogProps {
   open: boolean;
-  product: Product | null;
+  product: IProduct | null;
   isSaving: boolean;
   onClose: () => void;
-  onSubmit: (payload: ProductRequest) => void;
+  onSubmit: (payload: IProductRequest) => void;
 }
 
 export function ProductFormDialog({
@@ -62,9 +62,9 @@ export function ProductFormDialog({
   isSaving,
   onClose,
   onSubmit,
-}: ProductFormDialogProps) {
-  const [form, setForm] = useState<ProductRequest>(emptyProductForm);
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ProductRequest, string>>>({});
+}: IProductFormDialogProps) {
+  const [form, setForm] = useState<IProductRequest>(emptyProductForm);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof IProductRequest, string>>>({});
 
   useEffect(() => {
     if (!open) {
@@ -75,13 +75,13 @@ export function ProductFormDialog({
     setFieldErrors({});
   }, [open, product]);
 
-  const setField = <K extends keyof ProductRequest>(key: K, value: ProductRequest[K]) => {
+  const setField = <K extends keyof IProductRequest>(key: K, value: IProductRequest[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setFieldErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
   const handleSubmit = () => {
-    const payload: ProductRequest = {
+    const payload: IProductRequest = {
       ...form,
       sku: form.sku.trim(),
       name: form.name.trim(),
