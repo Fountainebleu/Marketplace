@@ -19,7 +19,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: marketplace-frontend
-    command: npm run dev -- --host 0.0.0.0
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
     environment:
       VITE_PRODUCTS_API_URL: /api/products
       VITE_ORDERS_API_URL: /api/orders

@@ -1,4 +1,4 @@
-.PHONY: up down build logs ps dev install dev-frontend dev-products dev-orders
+.PHONY: up down build logs ps dev install dev-frontend dev-products dev-orders up-fresh
 
 COMPOSE_FILE     := docker-compose.yml
 SVC_PRODUCTS_DB  := products-db
@@ -12,6 +12,10 @@ PRODUCTS_DIR     := backend/Marketplace/src/Services/ProductService/ProductServi
 ORDERS_DIR       := backend/Marketplace/src/Services/Orders/Orders.Api
 
 up:
+	docker compose -f $(COMPOSE_FILE) up --build -d
+
+up-fresh:
+	docker compose -f $(COMPOSE_FILE) down -v
 	docker compose -f $(COMPOSE_FILE) up --build -d
 
 down:
