@@ -64,6 +64,8 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__OrdersDb: Host=orders-db;Port=5432;Database=orders;Username=postgres;Password=postgres
       ProductCatalog__GrpcAddress: http://product-service:8081
+    ports:
+      - "5180:8080"
     expose:
       - "8080"
     depends_on:

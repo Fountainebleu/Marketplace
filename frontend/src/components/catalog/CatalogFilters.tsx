@@ -2,6 +2,7 @@ import {
   Box,
   Chip,
   FormControl,
+  IconButton,
   InputAdornment,
   InputLabel,
   MenuItem,
@@ -11,9 +12,10 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 import TuneIcon from '@mui/icons-material/Tune';
-import { CATEGORY_LABELS, FILTER_CATEGORIES } from '@/constants/categories';
+import { FILTER_CATEGORIES, formatProductCategory } from '@/types/productCategories';
 import { ProductCategory } from '@/types/product';
 
 export interface CatalogFiltersState {
@@ -26,9 +28,20 @@ export interface CatalogFiltersState {
 interface CatalogFiltersProps {
   filters: CatalogFiltersState;
   onChange: (filters: CatalogFiltersState) => void;
+  priceErrors?: Partial<Record<'minPrice' | 'maxPrice', string>>;
 }
 
-export function CatalogFilters({ filters, onChange }: CatalogFiltersProps) {
+const hideNumberSpinnersSx = {
+  '& input[type=number]': {
+    MozAppearance: 'textfield',
+  },
+  '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
+    WebkitAppearance: 'none',
+    margin: 0,
+  },
+};
+
+export const CatalogFilters = ({ filters, onChange, priceErrors = {} }: CatalogFiltersProps) => {
   const set = (patch: Partial<CatalogFiltersState>) => onChange({ ...filters, ...patch });
 
   return (
@@ -36,15 +49,15 @@ export function CatalogFilters({ filters, onChange }: CatalogFiltersProps) {
       <Stack direction="row" alignItems="center" spacing={1} mb={2.5}>
         <TuneIcon fontSize="small" color="primary" />
         <Typography variant="subtitle1" fontWeight={600}>
-          Поиск и фильтры
+          Каталог
         </Typography>
       </Stack>
 
       <Stack spacing={2.5}>
         <TextField
-          placeholder="Название, описание или артикул..."
+          placeholder="Поиск товаров..."
           value={filters.query}
-          onChange={(e) => set({ query: e.target.value })}
+          onChange={(event) => set({ query: event.target.value })}
           fullWidth
           InputProps={{
             startAdornment: (
@@ -52,6 +65,18 @@ export function CatalogFilters({ filters, onChange }: CatalogFiltersProps) {
                 <SearchIcon sx={{ color: 'text.secondary' }} />
               </InputAdornment>
             ),
+            endAdornment: filters.query ? (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="Очистить поиск"
+                  onClick={() => set({ query: '' })}
+                  edge="end"
+                  size="small"
+                >
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ) : null,
           }}
         />
 
@@ -66,7 +91,7 @@ export function CatalogFilters({ filters, onChange }: CatalogFiltersProps) {
           {FILTER_CATEGORIES.map((cat) => (
             <Chip
               key={cat}
-              label={CATEGORY_LABELS[cat]}
+              label={formatProductCategory(cat)}
               clickable
               variant={filters.category === cat ? 'filled' : 'outlined'}
               color={filters.category === cat ? 'primary' : 'default'}
@@ -81,12 +106,12 @@ export function CatalogFilters({ filters, onChange }: CatalogFiltersProps) {
             <Select
               label="Категория"
               value={filters.category}
-              onChange={(e) => set({ category: e.target.value as ProductCategory | '' })}
+              onChange={(event) => set({ category: event.target.value as ProductCategory | '' })}
             >
               <MenuItem value="">Все</MenuItem>
               {FILTER_CATEGORIES.map((cat) => (
                 <MenuItem key={cat} value={cat}>
-                  {CATEGORY_LABELS[cat]}
+                  {formatProductCategory(cat)}
                 </MenuItem>
               ))}
             </Select>
@@ -96,21 +121,25 @@ export function CatalogFilters({ filters, onChange }: CatalogFiltersProps) {
               label="Цена от"
               type="number"
               value={filters.minPrice}
-              onChange={(e) => set({ minPrice: e.target.value })}
+              onChange={(event) => set({ minPrice: event.target.value })}
               inputProps={{ min: 0 }}
-              sx={{ width: 140 }}
+              error={!!priceErrors.minPrice}
+              helperText={priceErrors.minPrice}
+              sx={{ width: 140, ...hideNumberSpinnersSx }}
             />
             <TextField
               label="Цена до"
               type="number"
               value={filters.maxPrice}
-              onChange={(e) => set({ maxPrice: e.target.value })}
+              onChange={(event) => set({ maxPrice: event.target.value })}
               inputProps={{ min: 0 }}
-              sx={{ width: 140 }}
+              error={!!priceErrors.maxPrice}
+              helperText={priceErrors.maxPrice}
+              sx={{ width: 140, ...hideNumberSpinnersSx }}
             />
           </Box>
         </Stack>
       </Stack>
     </Paper>
   );
-}
+};

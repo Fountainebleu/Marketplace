@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { normalizeQuantity } from '@/api/validation';
 import { CartItem } from '@/types/order';
 
 interface CartContextValue {
@@ -17,36 +18,51 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
 
   const addItem = useCallback((item: Omit<CartItem, 'quantity'>, quantity = 1) => {
+    const normalizedQuantity = normalizeQuantity(quantity);
+
     setItems((prev) => {
-      const existing = prev.find((i) => i.productId === item.productId);
+      const existing = prev.find((cartItem) => cartItem.productId === item.productId);
+
       if (existing) {
-        return prev.map((i) =>
-          i.productId === item.productId ? { ...i, quantity: i.quantity + quantity } : i,
+        return prev.map((cartItem) =>
+          cartItem.productId === item.productId
+            ? { ...cartItem, quantity: normalizeQuantity(cartItem.quantity + normalizedQuantity) }
+            : cartItem,
         );
       }
-      return [...prev, { ...item, quantity }];
+
+      return [...prev, { ...item, quantity: normalizedQuantity }];
     });
   }, []);
 
   const removeItem = useCallback((productId: string) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+    setItems((prev) => prev.filter((cartItem) => cartItem.productId !== productId));
   }, []);
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      setItems((prev) => prev.filter((i) => i.productId !== productId));
+    if (!Number.isFinite(quantity) || quantity < 1) {
+      setItems((prev) => prev.filter((cartItem) => cartItem.productId !== productId));
       return;
     }
+
+    const normalizedQuantity = normalizeQuantity(quantity);
+
     setItems((prev) =>
-      prev.map((i) => (i.productId === productId ? { ...i, quantity } : i)),
+      prev.map((cartItem) =>
+        cartItem.productId === productId ? { ...cartItem, quantity: normalizedQuantity } : cartItem,
+      ),
     );
   }, []);
 
   const clearCart = useCallback(() => setItems([]), []);
 
-  const totalItems = useMemo(() => items.reduce((sum, i) => sum + i.quantity, 0), [items]);
+  const totalItems = useMemo(
+    () => items.reduce((sum, cartItem) => sum + cartItem.quantity, 0),
+    [items],
+  );
+
   const totalPrice = useMemo(
-    () => items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0),
+    () => items.reduce((sum, cartItem) => sum + cartItem.unitPrice * cartItem.quantity, 0),
     [items],
   );
 
@@ -59,7 +75,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 }
 
 export function useCart() {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error('useCart must be used within CartProvider');
-  return ctx;
+  const context = useContext(CartContext);
+
+  if (!context) {
+    throw new Error('useCart must be used within CartProvider');
+  }
+
+  return context;
 }
