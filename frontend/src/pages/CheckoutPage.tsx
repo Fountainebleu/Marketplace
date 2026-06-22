@@ -13,10 +13,11 @@ import {
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { ApiError } from '@/api/client';
+import { getApiErrorMessage } from '@/api/api';
+import { hasValidationErrors, validateCheckoutForm } from '@/api/validation';
 import { useCart } from '@/context/CartContext';
-import { createOrder } from '@/services/orderService';
-import { formatPrice } from '@/theme';
+import { useCreateOrder } from '@/hooks/ordersQuery';
+import { formatPrice } from '@/utils/format';
 import { CheckoutForm } from '@/types/order';
 
 const emptyForm: CheckoutForm = {
@@ -25,20 +26,20 @@ const emptyForm: CheckoutForm = {
   deliveryAddress: '',
 };
 
+type CheckoutErrors = Partial<Record<keyof CheckoutForm | 'items', string>>;
+
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
   const navigate = useNavigate();
   const [form, setForm] = useState<CheckoutForm>(emptyForm);
-  const [errors, setErrors] = useState<Partial<CheckoutForm>>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [orderId, setOrderId] = useState<string | null>(null);
+  const [errors, setErrors] = useState<CheckoutErrors>({});
+  const createOrderMutation = useCreateOrder();
 
-  if (items.length === 0 && !orderId) {
+  if (items.length === 0 && !createOrderMutation.isSuccess) {
     return (
       <Box textAlign="center" py={10}>
         <Typography variant="h5" fontWeight={700} gutterBottom>
-          Нечего оформлять
+          Корзина пуста
         </Typography>
         <Button component={RouterLink} to="/" variant="contained" size="large" sx={{ mt: 2 }}>
           В каталог
@@ -47,24 +48,23 @@ export default function CheckoutPage() {
     );
   }
 
-  const validate = (): boolean => {
-    const next: Partial<CheckoutForm> = {};
-    if (!form.customerName.trim()) next.customerName = 'Укажите имя';
-    if (!form.phone.trim()) next.phone = 'Укажите телефон';
-    if (!form.deliveryAddress.trim()) next.deliveryAddress = 'Укажите адрес доставки';
-    setErrors(next);
-    return Object.keys(next).length === 0;
+  const updateField = <K extends keyof CheckoutForm>(key: K, value: CheckoutForm[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
 
-    setSubmitting(true);
-    setSubmitError(null);
+    const nextErrors = validateCheckoutForm(form, items.length);
+    setErrors(nextErrors);
 
-    try {
-      const order = await createOrder({
+    if (hasValidationErrors(nextErrors)) {
+      return;
+    }
+
+    createOrderMutation.mutate(
+      {
         customerId: crypto.randomUUID(),
         customerName: form.customerName.trim(),
         phone: form.phone.trim(),
@@ -73,20 +73,20 @@ export default function CheckoutPage() {
           productId: item.productId,
           quantity: item.quantity,
         })),
-      });
-
-      setOrderId(order.id);
-      clearCart();
-    } catch (error) {
-      setSubmitError(
-        error instanceof ApiError ? error.message : 'Не удалось оформить заказ. Попробуйте позже.',
-      );
-    } finally {
-      setSubmitting(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          clearCart();
+        },
+      },
+    );
   };
 
-  if (orderId) {
+  const submitError = createOrderMutation.error
+    ? getApiErrorMessage(createOrderMutation.error, 'Не удалось оформить заказ. Попробуйте позже.')
+    : null;
+
+  if (createOrderMutation.isSuccess && createOrderMutation.data) {
     return (
       <Box maxWidth={520} mx="auto" textAlign="center" py={6}>
         <Paper sx={{ p: 5 }}>
@@ -94,11 +94,14 @@ export default function CheckoutPage() {
           <Typography variant="h5" fontWeight={700} gutterBottom>
             Заказ оформлен!
           </Typography>
+          <Typography color="text.secondary" mb={1}>
+            Номер заказа: {createOrderMutation.data.id.slice(0, 8)}…
+          </Typography>
           <Typography color="text.secondary" mb={3}>
-            Номер заказа: {orderId}
+            Сумма: {formatPrice(createOrderMutation.data.totalPrice)}
           </Typography>
           <Button variant="contained" size="large" onClick={() => navigate('/')}>
-            Вернуться в каталог
+            Продолжить покупки
           </Button>
         </Paper>
       </Box>
@@ -111,8 +114,14 @@ export default function CheckoutPage() {
         Оформление заказа
       </Typography>
       <Typography color="text.secondary" mb={3}>
-        Заполните данные для доставки
+        Укажите контакты и адрес доставки
       </Typography>
+
+      {errors.items && (
+        <Alert severity="warning" sx={{ mb: 3, borderRadius: 3 }}>
+          {errors.items}
+        </Alert>
+      )}
 
       {submitError && (
         <Alert severity="error" sx={{ mb: 3, borderRadius: 3 }}>
@@ -121,47 +130,47 @@ export default function CheckoutPage() {
       )}
 
       <Stack direction={{ xs: 'column', lg: 'row' }} spacing={3} alignItems="flex-start">
-        <Paper component="form" onSubmit={handleSubmit} sx={{ p: 3, flex: 1 }}>
+        <Paper component="form" onSubmit={handleSubmit} sx={{ p: 3, flex: 1 }} noValidate>
           <Stack direction="row" alignItems="center" spacing={1} mb={3}>
             <LocalShippingOutlinedIcon color="primary" />
             <Typography variant="h6" fontWeight={600}>
-              Адрес доставки
+              Данные для доставки
             </Typography>
           </Stack>
           <Stack spacing={2.5}>
             <TextField
               label="Имя получателя"
               value={form.customerName}
-              onChange={(e) => setForm({ ...form, customerName: e.target.value })}
+              onChange={(event) => updateField('customerName', event.target.value)}
               error={!!errors.customerName}
               helperText={errors.customerName}
               fullWidth
               required
-              disabled={submitting}
+              disabled={createOrderMutation.isPending}
             />
             <TextField
               label="Телефон"
               placeholder="+7 (999) 000-00-00"
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              onChange={(event) => updateField('phone', event.target.value)}
               error={!!errors.phone}
               helperText={errors.phone}
               fullWidth
               required
-              disabled={submitting}
+              disabled={createOrderMutation.isPending}
             />
             <TextField
               label="Адрес доставки"
               placeholder="Город, улица, дом, квартира"
               value={form.deliveryAddress}
-              onChange={(e) => setForm({ ...form, deliveryAddress: e.target.value })}
+              onChange={(event) => updateField('deliveryAddress', event.target.value)}
               error={!!errors.deliveryAddress}
               helperText={errors.deliveryAddress}
               fullWidth
               multiline
               minRows={3}
               required
-              disabled={submitting}
+              disabled={createOrderMutation.isPending}
             />
             <Button
               type="submit"
@@ -169,9 +178,13 @@ export default function CheckoutPage() {
               size="large"
               fullWidth
               sx={{ mt: 1 }}
-              disabled={submitting}
+              disabled={createOrderMutation.isPending || items.length === 0}
             >
-              {submitting ? <CircularProgress size={24} color="inherit" /> : 'Подтвердить заказ'}
+              {createOrderMutation.isPending ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Подтвердить заказ'
+              )}
             </Button>
           </Stack>
         </Paper>

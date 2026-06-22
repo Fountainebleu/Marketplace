@@ -9,10 +9,12 @@ import {
   Typography,
 } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
+import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { CART_QUANTITY } from '@/api/validation';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useCart } from '@/context/CartContext';
-import { formatPrice } from '@/theme';
+import { formatPrice, pluralizeProducts } from '@/utils/format';
 
 export default function CartPage() {
   const { items, totalPrice, updateQuantity, removeItem } = useCart();
@@ -20,28 +22,16 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <Box
-        sx={{
-          textAlign: 'center',
-          py: 10,
-          px: 3,
-          borderRadius: 4,
-          bgcolor: 'background.paper',
-          border: 1,
-          borderColor: 'divider',
-        }}
-      >
-        <ShoppingBagOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-        <Typography variant="h5" fontWeight={700} gutterBottom>
-          Корзина пуста
-        </Typography>
-        <Typography color="text.secondary" mb={3}>
-          Добавьте товары из каталога
-        </Typography>
-        <Button component={RouterLink} to="/" variant="contained" size="large">
-          Перейти в каталог
-        </Button>
-      </Box>
+      <EmptyState
+        title="Корзина пуста"
+        description="Добавьте товары из каталога"
+        icon={<ShoppingCartOutlinedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
+        action={
+          <Button component={RouterLink} to="/" variant="contained" size="large">
+            В каталог
+          </Button>
+        }
+      />
     );
   }
 
@@ -51,7 +41,7 @@ export default function CartPage() {
         Корзина
       </Typography>
       <Typography color="text.secondary" mb={3}>
-        {items.length} {items.length === 1 ? 'товар' : items.length < 5 ? 'товара' : 'товаров'}
+        {items.length} {pluralizeProducts(items.length)}
       </Typography>
 
       <Stack spacing={2} mb={3}>
@@ -85,9 +75,9 @@ export default function CartPage() {
                   type="number"
                   size="small"
                   value={item.quantity}
-                  onChange={(e) => updateQuantity(item.productId, Number(e.target.value))}
-                  inputProps={{ min: 1 }}
-                  sx={{ width: 72 }}
+                  onChange={(event) => updateQuantity(item.productId, Number(event.target.value))}
+                  inputProps={{ min: CART_QUANTITY.min, max: CART_QUANTITY.max }}
+                  sx={{ width: 80 }}
                 />
                 <Typography fontWeight={700} minWidth={90} textAlign="right">
                   {formatPrice(item.unitPrice * item.quantity)}
@@ -106,6 +96,11 @@ export default function CartPage() {
       </Stack>
 
       <Paper sx={{ p: 3 }}>
+        <Stack direction="row" justifyContent="space-between" mb={2}>
+          <Typography color="text.secondary">Товары</Typography>
+          <Typography fontWeight={600}>{formatPrice(totalPrice)}</Typography>
+        </Stack>
+        <Divider sx={{ my: 2 }} />
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Box>
             <Typography color="text.secondary" variant="body2">
@@ -119,10 +114,6 @@ export default function CartPage() {
             Оформить заказ
           </Button>
         </Stack>
-        <Divider sx={{ my: 2 }} />
-        <Typography variant="caption" color="text.secondary">
-          Доставка рассчитывается при оформлении
-        </Typography>
       </Paper>
     </Box>
   );

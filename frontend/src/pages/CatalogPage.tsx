@@ -1,20 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
-import {
-  Alert,
-  Box,
-  CircularProgress,
-  Grid2 as Grid,
-  Pagination,
-  Stack,
-  Typography,
-} from '@mui/material';
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
-import { CatalogFilters, CatalogFiltersState } from '@/components/CatalogFilters';
-import { ProductCard } from '@/components/ProductCard';
-import { searchProducts } from '@/services/productService';
+import { useState } from 'react';
+import { Alert, Box, Grid2 as Grid, Stack, Typography } from '@mui/material';
+import { CatalogFilters, CatalogFiltersState } from '@/components/catalog/CatalogFilters';
+import { ProductCard } from '@/components/catalog/ProductCard';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ListPagination } from '@/components/ui/ListPagination';
+import { PageLoader } from '@/components/ui/PageLoader';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { getPageInfo, useServerPagination } from '@/hooks/useServerPagination';
+import { useProductsSearch } from '@/hooks/productsQuery';
+import { hasValidationErrors, validateCatalogPriceFilters } from '@/api/validation';
+import { pluralizeProducts } from '@/utils/format';
 import { Product, ProductCategory } from '@/types/product';
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 12;
+
 const defaultFilters: CatalogFiltersState = {
   query: '',
   category: '',
@@ -23,49 +22,29 @@ const defaultFilters: CatalogFiltersState = {
 };
 
 export default function CatalogPage() {
-  const [filters, setFilters] = useState<CatalogFiltersState>(defaultFilters);
-  const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [page, setPage] = useState(1);
-  const [items, setItems] = useState<Product[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState(defaultFilters);
+  const debouncedQuery = useDebouncedValue(filters.query);
+  const { page, goToPage } = useServerPagination([
+    debouncedQuery,
+    filters.category,
+    filters.minPrice,
+    filters.maxPrice,
+  ]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedQuery(filters.query), 300);
-    return () => clearTimeout(timer);
-  }, [filters.query]);
+  const priceErrors = validateCatalogPriceFilters(filters.minPrice, filters.maxPrice);
+  const hasPriceErrors = hasValidationErrors(priceErrors);
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedQuery, filters.category, filters.minPrice, filters.maxPrice]);
+  const { data, isLoading, isError } = useProductsSearch({
+    query: debouncedQuery || undefined,
+    category: filters.category !== '' ? (filters.category as ProductCategory) : undefined,
+    minPrice: !hasPriceErrors && filters.minPrice ? Number(filters.minPrice) : undefined,
+    maxPrice: !hasPriceErrors && filters.maxPrice ? Number(filters.maxPrice) : undefined,
+    page,
+    pageSize: PAGE_SIZE,
+  });
 
-  const loadProducts = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await searchProducts({
-        query: debouncedQuery || undefined,
-        category: filters.category !== '' ? (filters.category as ProductCategory) : undefined,
-        minPrice: filters.minPrice ? Number(filters.minPrice) : undefined,
-        maxPrice: filters.maxPrice ? Number(filters.maxPrice) : undefined,
-        page,
-        pageSize: PAGE_SIZE,
-      });
-      setItems(result.items);
-      setTotalCount(result.totalCount);
-    } catch {
-      setError('Не удалось загрузить каталог');
-    } finally {
-      setLoading(false);
-    }
-  }, [debouncedQuery, filters.category, filters.minPrice, filters.maxPrice, page]);
-
-  useEffect(() => {
-    loadProducts();
-  }, [loadProducts]);
-
-  const pageCount = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const { items, totalCount, pageSize, pageCount } = getPageInfo(data, PAGE_SIZE);
+  const products = items as Product[];
 
   return (
     <Box>
@@ -81,72 +60,46 @@ export default function CatalogPage() {
         <Typography variant="h4" fontWeight={700} gutterBottom>
           Каталог товаров
         </Typography>
-        <Typography sx={{ opacity: 0.9, maxWidth: 480, mb: 2 }}>
-          Выбирайте товары с быстрой доставкой — поиск, фильтры и оформление заказа в пару кликов.
+        <Typography sx={{ opacity: 0.92, maxWidth: '100%' }}>
+          Электроника, продукты, одежда, книги и многое другое — с доставкой на дом.
         </Typography>
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ opacity: 0.85 }}>
-          <LocalShippingOutlinedIcon fontSize="small" />
-          <Typography variant="body2">Бесплатная доставка от 3 000 ₽</Typography>
-        </Stack>
       </Box>
 
-      <CatalogFilters filters={filters} onChange={setFilters} />
+      <CatalogFilters filters={filters} onChange={setFilters} priceErrors={priceErrors} />
 
-      {!loading && !error && (
+      {!isLoading && !isError && (
         <Typography variant="body2" color="text.secondary" sx={{ my: 2.5 }}>
-          Найдено: {totalCount}
+          Найдено: {totalCount} {pluralizeProducts(totalCount)}
         </Typography>
       )}
 
-      {error && (
+      {isError && (
         <Alert severity="error" sx={{ mb: 2, borderRadius: 3 }}>
-          {error}
+          Не удалось загрузить каталог
         </Alert>
       )}
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-          <CircularProgress />
-        </Box>
-      ) : items.length === 0 ? (
-        <Box
-          sx={{
-            textAlign: 'center',
-            py: 10,
-            px: 3,
-            borderRadius: 4,
-            bgcolor: 'background.paper',
-            border: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Typography variant="h6" gutterBottom>
-            Товары не найдены
-          </Typography>
-          <Typography color="text.secondary">
-            Попробуйте изменить фильтры или поисковый запрос
-          </Typography>
-        </Box>
+      {isLoading ? (
+        <PageLoader />
+      ) : products.length === 0 ? (
+        <EmptyState
+          title="Товары не найдены"
+          description="Попробуйте другую категорию или измените поиск"
+        />
       ) : (
         <>
           <Grid container spacing={3}>
-            {items.map((product) => (
-              <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
+            {products.map((product) => (
+              <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
                 <ProductCard product={product} />
               </Grid>
             ))}
           </Grid>
 
-          {pageCount > 1 && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
-              <Pagination
-                count={pageCount}
-                page={page}
-                onChange={(_, value) => setPage(value)}
-                color="primary"
-                shape="rounded"
-              />
-            </Box>
+          {totalCount > pageSize && (
+            <Stack sx={{ mt: 5 }}>
+              <ListPagination page={page} pageCount={pageCount} onChange={goToPage} />
+            </Stack>
           )}
         </>
       )}

@@ -3,7 +3,7 @@ import { alpha, createTheme, type Shadows } from '@mui/material/styles';
 const primary = '#6366f1';
 const primaryDark = '#4f46e5';
 
-export const theme = createTheme({
+const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
@@ -115,14 +115,6 @@ export const theme = createTheme({
   },
 });
 
-export function formatPrice(value: number) {
-  return new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: 'RUB',
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 export const cardHoverSx = {
   transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
   '&:hover': {
@@ -131,3 +123,5 @@ export const cardHoverSx = {
     borderColor: alpha(primary, 0.3),
   },
 };
+
+export default theme;

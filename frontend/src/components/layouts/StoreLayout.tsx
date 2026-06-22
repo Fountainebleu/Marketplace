@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import {
   AppBar,
   Badge,
@@ -8,11 +9,14 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material';
-import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
+import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
+import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
+import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import { Link as RouterLink, Outlet } from 'react-router-dom';
+import { PageLoader } from '@/components/ui/PageLoader';
 import { useCart } from '@/context/CartContext';
 
-export function Layout() {
+const StoreLayout = () => {
   const { totalItems } = useCart();
 
   return (
@@ -48,11 +52,9 @@ export function Layout() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#fff',
-                  fontWeight: 700,
-                  fontSize: 18,
                 }}
               >
-                M
+                <StorefrontOutlinedIcon fontSize="small" />
               </Box>
               <Box>
                 <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2}>
@@ -66,6 +68,21 @@ export function Layout() {
 
             <IconButton
               component={RouterLink}
+              to="/admin"
+              aria-label="Админка"
+              sx={{
+                bgcolor: 'background.default',
+                border: 1,
+                borderColor: 'divider',
+                mr: 1,
+                '&:hover': { bgcolor: 'background.default', borderColor: 'primary.light' },
+              }}
+            >
+              <AdminPanelSettingsOutlinedIcon />
+            </IconButton>
+
+            <IconButton
+              component={RouterLink}
               to="/cart"
               aria-label="Корзина"
               sx={{
@@ -76,7 +93,7 @@ export function Layout() {
               }}
             >
               <Badge badgeContent={totalItems} color="secondary">
-                <ShoppingBagOutlinedIcon />
+                <ShoppingCartOutlinedIcon />
               </Badge>
             </IconButton>
           </Toolbar>
@@ -84,8 +101,12 @@ export function Layout() {
       </AppBar>
 
       <Container component="main" maxWidth="lg" sx={{ flex: 1, py: { xs: 3, md: 4 } }}>
-        <Outlet />
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
       </Container>
     </Box>
   );
-}
+};
+
+export default StoreLayout;
