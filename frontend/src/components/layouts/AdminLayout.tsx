@@ -17,7 +17,7 @@ import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import { Link as RouterLink, Outlet, useLocation } from 'react-router-dom';
-import { PageLoader } from '@/components/ui/PageLoader';
+import Loader from '@/components/UI/loader/Loader';
 
 const DRAWER_WIDTH = 260;
 
@@ -128,7 +128,7 @@ const AdminLayout = () => {
         )}
 
         <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
-          <Suspense fallback={<PageLoader />}>
+          <Suspense fallback={<Loader text="Пожалуйста, подождите..." />}>
             <Outlet />
           </Suspense>
         </Container>

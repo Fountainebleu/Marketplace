@@ -14,6 +14,10 @@ ORDERS_DIR       := backend/Marketplace/src/Services/Orders/Orders.Api
 up:
 	docker compose -f $(COMPOSE_FILE) up --build -d
 
+up-fresh:
+	docker compose -f $(COMPOSE_FILE) down -v
+	docker compose -f $(COMPOSE_FILE) up --build -d
+
 down:
 	docker compose -f $(COMPOSE_FILE) down
 

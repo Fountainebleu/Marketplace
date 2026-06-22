@@ -1,16 +1,16 @@
-import type { ReactNode } from 'react';
-import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { lazy } from 'react';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import StoreLayout from '@/components/layouts/StoreLayout';
 
-const CatalogPage = lazy(() => import('@/pages/CatalogPage'));
-const ProductPage = lazy(() => import('@/pages/ProductPage'));
-const CartPage = lazy(() => import('@/pages/CartPage'));
-const CheckoutPage = lazy(() => import('@/pages/CheckoutPage'));
-const AdminProductsPage = lazy(() => import('@/pages/admin/AdminProductsPage'));
-const AdminOrdersPage = lazy(() => import('@/pages/admin/AdminOrdersPage'));
-const AdminOrderPage = lazy(() => import('@/pages/admin/AdminOrderPage'));
+const CatalogPage = lazy(() => import('@/components/store/CatalogPage'));
+const ProductPage = lazy(() => import('@/components/store/ProductPage'));
+const CartPage = lazy(() => import('@/components/store/CartPage'));
+const CheckoutPage = lazy(() => import('@/components/store/CheckoutPage'));
+const MyOrderPage = lazy(() => import('@/components/store/MyOrderPage'));
+const AdminProductsPage = lazy(() => import('@/components/admin/AdminProductsPage'));
+const AdminOrdersPage = lazy(() => import('@/components/admin/AdminOrdersPage'));
+const AdminOrderPage = lazy(() => import('@/components/admin/AdminOrderPage'));
 
 export const router = createBrowserRouter([
   {
@@ -20,6 +20,8 @@ export const router = createBrowserRouter([
       { path: 'products/:id', element: <ProductPage /> },
       { path: 'cart', element: <CartPage /> },
       { path: 'checkout', element: <CheckoutPage /> },
+      { path: 'my-order', element: <MyOrderPage /> },
+      { path: 'my-order/:id', element: <MyOrderPage /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },

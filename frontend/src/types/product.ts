@@ -1,4 +1,3 @@
-/** ProductService.Domain.Enums.ProductCategory */
 export enum ProductCategory {
   Undefined = 0,
   General = 1,
@@ -9,8 +8,18 @@ export enum ProductCategory {
   Books = 6,
 }
 
-/** ProductService.Presentation.Models.ProductResponse */
-export interface Product {
+export enum ProductSortField {
+  CreatedAt = 1,
+  Name = 2,
+  Price = 3,
+}
+
+export enum SortDirection {
+  Asc = 1,
+  Desc = 2,
+}
+
+export interface IProduct {
   id: string;
   sku: string;
   name: string;
@@ -28,28 +37,25 @@ export interface Product {
   updatedAt: string;
 }
 
-/** ProductService.Presentation.Models.ProductSearchRequest */
-export interface ProductSearchParams {
+export interface IProductSearchParams {
   query?: string;
   category?: ProductCategory;
   minPrice?: number;
   maxPrice?: number;
   page?: number;
   pageSize?: number;
-  sortBy?: number;
-  sortDirection?: number;
+  sortBy?: ProductSortField;
+  sortDirection?: SortDirection;
 }
 
-/** ProductService.Presentation.Models.ProductListResponse */
-export interface ProductListResult {
-  items: Product[];
+export interface IProductListResult {
+  items: IProduct[];
   totalCount: number;
   page: number;
   pageSize: number;
 }
 
-/** ProductService.Presentation.Models.ProductRequest */
-export interface ProductRequest {
+export interface IProductRequest {
   sku: string;
   name: string;
   description: string;

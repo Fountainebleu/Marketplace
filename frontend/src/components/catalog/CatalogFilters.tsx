@@ -18,16 +18,16 @@ import TuneIcon from '@mui/icons-material/Tune';
 import { FILTER_CATEGORIES, formatProductCategory } from '@/types/productCategories';
 import { ProductCategory } from '@/types/product';
 
-export interface CatalogFiltersState {
+export interface ICatalogFiltersState {
   query: string;
   category: ProductCategory | '';
   minPrice: string;
   maxPrice: string;
 }
 
-interface CatalogFiltersProps {
-  filters: CatalogFiltersState;
-  onChange: (filters: CatalogFiltersState) => void;
+interface ICatalogFiltersProps {
+  filters: ICatalogFiltersState;
+  onChange: (filters: ICatalogFiltersState) => void;
   priceErrors?: Partial<Record<'minPrice' | 'maxPrice', string>>;
 }
 
@@ -41,8 +41,8 @@ const hideNumberSpinnersSx = {
   },
 };
 
-export const CatalogFilters = ({ filters, onChange, priceErrors = {} }: CatalogFiltersProps) => {
-  const set = (patch: Partial<CatalogFiltersState>) => onChange({ ...filters, ...patch });
+export const CatalogFilters = ({ filters, onChange, priceErrors = {} }: ICatalogFiltersProps) => {
+  const set = (patch: Partial<ICatalogFiltersState>) => onChange({ ...filters, ...patch });
 
   return (
     <Paper sx={{ p: 3 }}>

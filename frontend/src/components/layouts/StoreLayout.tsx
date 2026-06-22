@@ -11,10 +11,11 @@ import {
 } from '@mui/material';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
+import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import { Link as RouterLink, Outlet } from 'react-router-dom';
-import { PageLoader } from '@/components/ui/PageLoader';
-import { useCart } from '@/context/CartContext';
+import Loader from '@/components/UI/loader/Loader';
+import { useCart } from '@/contexts/CartContext';
 
 const StoreLayout = () => {
   const { totalItems } = useCart();
@@ -68,6 +69,21 @@ const StoreLayout = () => {
 
             <IconButton
               component={RouterLink}
+              to="/my-order"
+              aria-label="Мой заказ"
+              sx={{
+                bgcolor: 'background.default',
+                border: 1,
+                borderColor: 'divider',
+                mr: 1,
+                '&:hover': { bgcolor: 'background.default', borderColor: 'primary.light' },
+              }}
+            >
+              <LocalShippingOutlinedIcon />
+            </IconButton>
+
+            <IconButton
+              component={RouterLink}
               to="/admin"
               aria-label="Админка"
               sx={{
@@ -101,7 +117,7 @@ const StoreLayout = () => {
       </AppBar>
 
       <Container component="main" maxWidth="lg" sx={{ flex: 1, py: { xs: 3, md: 4 } }}>
-        <Suspense fallback={<PageLoader />}>
+        <Suspense fallback={<Loader text="Пожалуйста, подождите..." />}>
           <Outlet />
         </Suspense>
       </Container>

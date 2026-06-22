@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FC, FormEvent, useState } from 'react';
 import {
   Alert,
   Box,
@@ -11,31 +11,36 @@ import {
   Typography,
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { getApiErrorMessage } from '@/api/api';
+import { getApiErrorMessage } from '@/api/instance';
 import { hasValidationErrors, validateCheckoutForm } from '@/api/validation';
-import { useCart } from '@/context/CartContext';
-import { useCreateOrder } from '@/hooks/ordersQuery';
+import { useCart } from '@/contexts/CartContext';
+import { useCreateOrder, useUpdateOrderStatus } from '@/hooks/ordersQuery';
 import { formatPrice } from '@/utils/format';
-import { CheckoutForm } from '@/types/order';
+import { ICheckoutForm, IOrderResponse, OrderStatus } from '@/types/order';
 
-const emptyForm: CheckoutForm = {
+const emptyForm: ICheckoutForm = {
   customerName: '',
   phone: '',
   deliveryAddress: '',
 };
 
-type CheckoutErrors = Partial<Record<keyof CheckoutForm | 'items', string>>;
+type CheckoutErrors = Partial<Record<keyof ICheckoutForm | 'items', string>>;
 
-export default function CheckoutPage() {
+const CheckoutPage: FC = () => {
   const { items, totalPrice, clearCart } = useCart();
   const navigate = useNavigate();
-  const [form, setForm] = useState<CheckoutForm>(emptyForm);
+  const [form, setForm] = useState<ICheckoutForm>(emptyForm);
   const [errors, setErrors] = useState<CheckoutErrors>({});
-  const createOrderMutation = useCreateOrder();
+  const [createdOrder, setCreatedOrder] = useState<IOrderResponse | null>(null);
+  const [isPaid, setIsPaid] = useState(false);
 
-  if (items.length === 0 && !createOrderMutation.isSuccess) {
+  const createOrderMutation = useCreateOrder();
+  const payOrderMutation = useUpdateOrderStatus();
+
+  if (items.length === 0 && !createdOrder) {
     return (
       <Box textAlign="center" py={10}>
         <Typography variant="h5" fontWeight={700} gutterBottom>
@@ -48,7 +53,7 @@ export default function CheckoutPage() {
     );
   }
 
-  const updateField = <K extends keyof CheckoutForm>(key: K, value: CheckoutForm[K]) => {
+  const updateField = <K extends keyof ICheckoutForm>(key: K, value: ICheckoutForm[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
@@ -75,8 +80,27 @@ export default function CheckoutPage() {
         })),
       },
       {
-        onSuccess: () => {
+        onSuccess: (order) => {
+          setCreatedOrder(order);
           clearCart();
+        },
+      },
+    );
+  };
+
+  const handlePay = () => {
+    if (!createdOrder) {
+      return;
+    }
+
+    payOrderMutation.mutate(
+      {
+        id: createdOrder.id,
+        request: { status: OrderStatus.Paid },
+      },
+      {
+        onSuccess: () => {
+          setIsPaid(true);
         },
       },
     );
@@ -86,23 +110,93 @@ export default function CheckoutPage() {
     ? getApiErrorMessage(createOrderMutation.error, 'Не удалось оформить заказ. Попробуйте позже.')
     : null;
 
-  if (createOrderMutation.isSuccess && createOrderMutation.data) {
+  const payError = payOrderMutation.error
+    ? getApiErrorMessage(payOrderMutation.error, 'Не удалось провести оплату. Попробуйте ещё раз.')
+    : null;
+
+  if (isPaid && createdOrder) {
     return (
       <Box maxWidth={520} mx="auto" textAlign="center" py={6}>
         <Paper sx={{ p: 5 }}>
           <CheckCircleOutlineIcon sx={{ fontSize: 72, color: 'success.main', mb: 2 }} />
           <Typography variant="h5" fontWeight={700} gutterBottom>
-            Заказ оформлен!
+            Оплата прошла успешно!
           </Typography>
           <Typography color="text.secondary" mb={1}>
-            Номер заказа: {createOrderMutation.data.id.slice(0, 8)}…
+            Заказ оформлен и оплачен
+          </Typography>
+          <Typography color="text.secondary" mb={1}>
+            Номер заказа: {createdOrder.id.slice(0, 8)}…
           </Typography>
           <Typography color="text.secondary" mb={3}>
-            Сумма: {formatPrice(createOrderMutation.data.totalPrice)}
+            Сумма: {formatPrice(createdOrder.totalPrice)}
           </Typography>
-          <Button variant="contained" size="large" onClick={() => navigate('/')}>
-            Продолжить покупки
-          </Button>
+          <Stack spacing={1.5}>
+            <Button
+              variant="contained"
+              size="large"
+              fullWidth
+              onClick={() => navigate('/my-order')}
+            >
+              Мои заказы
+            </Button>
+            <Button variant="outlined" size="large" fullWidth onClick={() => navigate('/')}>
+              Продолжить покупки
+            </Button>
+          </Stack>
+        </Paper>
+      </Box>
+    );
+  }
+
+  if (createdOrder) {
+    return (
+      <Box maxWidth={520} mx="auto" py={6}>
+        <Paper sx={{ p: 5 }}>
+          <Stack spacing={3} alignItems="center" textAlign="center">
+            <CreditCardOutlinedIcon sx={{ fontSize: 64, color: 'primary.main' }} />
+            <Box>
+              <Typography variant="h5" fontWeight={700} gutterBottom>
+                Оплата заказа
+              </Typography>
+              <Typography color="text.secondary">
+                Номер заказа: {createdOrder.id.slice(0, 8)}…
+              </Typography>
+            </Box>
+
+            <Box width="100%">
+              <Stack direction="row" justifyContent="space-between" mb={1}>
+                <Typography color="text.secondary">К оплате</Typography>
+                <Typography variant="h5" fontWeight={700} color="primary.main">
+                  {formatPrice(createdOrder.totalPrice)}
+                </Typography>
+              </Stack>
+              <Typography variant="body2" color="text.secondary">
+                Доставка: {createdOrder.deliveryAddress}
+              </Typography>
+            </Box>
+
+            {payError && (
+              <Alert severity="error" sx={{ width: '100%', borderRadius: 3 }}>
+                {payError}
+              </Alert>
+            )}
+
+            <Button
+              variant="contained"
+              size="large"
+              fullWidth
+              startIcon={<CreditCardOutlinedIcon />}
+              onClick={handlePay}
+              disabled={payOrderMutation.isPending}
+            >
+              {payOrderMutation.isPending ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Оплатить'
+              )}
+            </Button>
+          </Stack>
         </Paper>
       </Box>
     );
@@ -216,4 +310,6 @@ export default function CheckoutPage() {
       </Stack>
     </Box>
   );
-}
+};
+
+export default CheckoutPage;

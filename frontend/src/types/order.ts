@@ -1,4 +1,3 @@
-/** Orders.Api.Domain.OrderStatus */
 export enum OrderStatus {
   Created = 0,
   Paid = 1,
@@ -8,7 +7,7 @@ export enum OrderStatus {
   Canceled = 5,
 }
 
-export interface CartItem {
+export interface ICartItem {
   productId: string;
   productName: string;
   unitPrice: number;
@@ -16,44 +15,39 @@ export interface CartItem {
   imageUrl?: string;
 }
 
-export interface CheckoutForm {
+export interface ICheckoutForm {
   customerName: string;
   phone: string;
   deliveryAddress: string;
 }
 
-/** Orders.Api.Contracts.CreateOrderItemRequest */
-export interface CreateOrderItemRequest {
+export interface ICreateOrderItemRequest {
   productId: string;
   quantity: number;
 }
 
-/** Orders.Api.Contracts.CreateOrderRequest */
-export interface CreateOrderRequest {
+export interface ICreateOrderRequest {
   customerId: string;
   customerName: string;
   phone: string;
   deliveryAddress: string;
-  items: CreateOrderItemRequest[];
+  items: ICreateOrderItemRequest[];
 }
 
-/** Orders.Api.Contracts.OrderItemResponse */
-export interface OrderItemResponse {
+export interface IOrderItemResponse {
   productId: string;
   productName: string;
   unitPrice: number;
   quantity: number;
 }
 
-/** Orders.Api.Contracts.OrderStatusHistoryResponse */
-export interface OrderStatusHistoryResponse {
+export interface IOrderStatusHistoryResponse {
   status: OrderStatus;
   comment?: string;
   changedAt: string;
 }
 
-/** Orders.Api.Contracts.OrderResponse */
-export interface OrderResponse {
+export interface IOrderResponse {
   id: string;
   customerId: string;
   customerName: string;
@@ -63,12 +57,11 @@ export interface OrderResponse {
   totalPrice: number;
   createdAt: string;
   updatedAt: string;
-  items: OrderItemResponse[];
-  history: OrderStatusHistoryResponse[];
+  items: IOrderItemResponse[];
+  history: IOrderStatusHistoryResponse[];
 }
 
-/** Orders.Api.Contracts.UpdateOrderStatusRequest */
-export interface UpdateOrderStatusRequest {
+export interface IUpdateOrderStatusRequest {
   status: OrderStatus;
   comment?: string;
 }

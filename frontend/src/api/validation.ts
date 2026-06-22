@@ -1,9 +1,9 @@
-import { CheckoutForm } from '@/types/order';
-import { ProductCategory, ProductRequest } from '@/types/product';
+import { ICheckoutForm } from '@/types/order';
+import { ProductCategory, IProductRequest } from '@/types/product';
 
 export type FieldErrors<T extends string> = Partial<Record<T, string>>;
 
-export const LIMITS = {
+const LIMITS = {
   customerName: 200,
   phone: 32,
   deliveryAddress: 500,
@@ -75,10 +75,10 @@ function parsePrice(value: string): number | null {
 }
 
 export function validateCheckoutForm(
-  form: CheckoutForm,
+  form: ICheckoutForm,
   itemsCount: number,
-): FieldErrors<keyof CheckoutForm> & { items?: string } {
-  const errors: FieldErrors<keyof CheckoutForm> & { items?: string } = {};
+): FieldErrors<keyof ICheckoutForm> & { items?: string } {
+  const errors: FieldErrors<keyof ICheckoutForm> & { items?: string } = {};
 
   errors.customerName = checkRequired(form.customerName, 'Укажите имя получателя', LIMITS.customerName);
 
@@ -107,8 +107,8 @@ export function validateCheckoutForm(
   return errors;
 }
 
-export function validateProductRequest(form: ProductRequest): FieldErrors<keyof ProductRequest> {
-  const errors: FieldErrors<keyof ProductRequest> = {};
+export function validateProductRequest(form: IProductRequest): FieldErrors<keyof IProductRequest> {
+  const errors: FieldErrors<keyof IProductRequest> = {};
 
   errors.sku = checkRequired(form.sku, 'Укажите артикул', LIMITS.sku);
   errors.name = checkRequired(form.name, 'Укажите название', LIMITS.productName);
